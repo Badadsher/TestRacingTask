@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
-
+using UnityEngine.UIElements;
 public class Movement : MonoBehaviour
 {
 
@@ -48,9 +50,14 @@ public class Movement : MonoBehaviour
 
     // Координаты финиша
     [SerializeField] private GameObject finishLineObject;
-   
+    private bool hasCrossedFinish = false; // Для отслеживания пересечения финиша
 
-    // Start is called before the first frame update
+    // Ссылка на UI-текст для отображения текущего заезда
+    [SerializeField] private TextMeshProUGUI raceCounterText;
+    private int currentRace = 0;
+
+  
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -106,14 +113,36 @@ public class Movement : MonoBehaviour
         rearLeftWheel.transform.Rotate(Vector3.right, rotationAmount);
         rearRightWheel.transform.Rotate(Vector3.right, rotationAmount);
 
-        // Проверка на финиш
-        if (finishLineObject != null && Vector3.Distance(transform.position, finishLineObject.transform.position) < 1f && !hasFinishedRace)
+
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Finisher"))
         {
-            hasFinishedRace = true;
-            if (!ghostCarActivated)
+            if (!hasCrossedFinish)
             {
-                SpawnGhostCar();
+                hasCrossedFinish = true;
+                currentRace++;
+                UpdateRaceCounterUI();
             }
+
+            if (!hasFinishedRace)
+            {
+                hasFinishedRace = true;
+                if (!ghostCarActivated)
+                {
+                    SpawnGhostCar();
+                }
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Finisher"))
+        {
+            hasCrossedFinish = false;    
         }
     }
 
@@ -143,6 +172,11 @@ public class Movement : MonoBehaviour
         // Удаляем призрака после завершения пути
         Destroy(ghostCar);
         ghostCarActivated = false;
+    }
+
+    void UpdateRaceCounterUI()
+    {
+            raceCounterText.text = "Круг: " + currentRace;
     }
 }
 
